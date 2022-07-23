@@ -4,8 +4,7 @@ header('Access-Control-Allow-Origin: *');
 header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept");
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 
-require_once("../conexion.php");
-require_once("../encrypted.php");
+require_once("./conexion.php");
 $conexion = new Conexion();
 
 $frm = json_decode(file_get_contents('php://input'), true);
@@ -53,105 +52,6 @@ try {
         exit();
   	  }
   }
-  // Crear un nuevo post
-  else if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-      $input = $_POST;
-          
-      $descripcion = $frm['descripcion'];
-      $orden = $frm['orden'];
-      $estado = $frm['estado'];
-      $registradopor = openCypher('decrypt', $frm['token']);
-      $date = date("Y-m-d H:i:s");
-      
-      $sql = "INSERT INTO 
-              pinchetas_restaurante.tipoproducto (tipr_descripcion, tipr_orden, tipr_estado, tipr_registradopor, tipr_fechacambio)
-              VALUES (?, ?, ?, ?, ?); ";
-            
-      $sql = $conexion->prepare($sql);
-      $sql->bindValue(1, $descripcion);
-      $sql->bindValue(2, $orden);
-      $sql->bindValue(3, $estado);
-      $sql->bindValue(4, $registradopor);
-      $sql->bindValue(5, $date);
-      $sql->execute();
-      $postId = $conexion->lastInsertId();
- 
-
-    $input['id'] = $postId;
-    $input['mensaje'] = "Registrado con éxito";
-    header("HTTP/1.1 200 OK");
-    echo json_encode($input);
-    exit();
-  	  
-  }
-  //Actualizar
-  else if ($_SERVER['REQUEST_METHOD'] == 'PUT') {
-      $input = $_GET;
-      
-      $id = $frm['id'];
-      $descripcion = $frm['descripcion'];
-      $orden = $frm['orden'];
-      $estado = $frm['estado'];
-      $registradopor = openCypher('decrypt', $frm['token']);
-      $date = date("Y-m-d H:i:s");
-      
-      $sql = "UPDATE pinchetas_restaurante.tipoproducto 
-              SET tipr_descripcion = ?, tipr_orden = ?, tipr_estado = ?, tipr_registradopor = ?, tipr_fechacambio = ?
-              WHERE tipr_id = ?; ";
-            
-      $sql = $conexion->prepare($sql);
-      $sql->bindValue(1, $descripcion);
-      $sql->bindValue(2, $orden);
-      $sql->bindValue(3, $estado);
-      $sql->bindValue(4, $registradopor);
-      $sql->bindValue(5, $date);
-      $sql->bindValue(6, $id);
-      $result = $sql->execute();
-      
-      if($result) {
-        $input['id'] = $result;
-        $input['mensaje'] = "Actualizado con éxito";
-        header("HTTP/1.1 200 OK");
-        echo json_encode($input);
-        exit();
-  	  } else {
-        $input['id'] = $result;
-        $input['mensaje'] = "Error actualizando";
-        header("HTTP/1.1 400 Bad Request");
-        echo json_encode($input);
-        exit();
-  	  }
-  	  
-  }
-  // Eliminar
-  else if ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
-      $input = $_GET;
-      $id = $input['id'];
-      $registradopor = openCypher('decrypt', $input['token']);
-
-      $date = date("Y-m-d H:i:s");
-      
-      $sql = "CALL procedimiento_eliminar_tipoproducto(?, ?); ";
-            
-      $sql = $conexion->prepare($sql);
-      $sql->bindValue(1, $id);
-      $sql->bindValue(2, $registradopor);
-      $result = $sql->execute();
-      if($result) {
-        $output['id'] = $postId;
-        $output['mensaje'] = "Eliminado con éxito";
-        header("HTTP/1.1 200 OK");
-        echo json_encode($output);
-        exit();
-  	  } else {
-        $output['id'] = $postId;
-        $output['mensaje'] = "Error eliminando";
-        header("HTTP/1.1 400 Bad Request");
-        echo json_encode($output);
-        exit();
-  	  }
-  }
-
 } catch (Exception $e) {
     echo 'Excepción capturada: ', $e->getMessage(), "\n";
 }
